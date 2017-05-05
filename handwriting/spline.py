@@ -1,20 +1,22 @@
 import pickle
 import time
-from multiprocessing import Process
-from scipy.stats import pearsonr,linregress
+#from multiprocessing import Process
+#from scipy.stats import pearsonr,linregress
 from collections import deque
 from scipy.interpolate import UnivariateSpline
-from scipy.interpolate import InterpolatedUnivariateSpline
-import matplotlib.pyplot as plt
-import numpy as np
-import threading,sys
-import math
-import pygame
+#from scipy.interpolate import InterpolatedUnivariateSpline
+#import matplotlib.pyplot as plt
+#import numpy as np
+#import threading
+import sys
+#import math
+#import pygame
 
-class Sketch(object):
-    def __init__(self):
+class spline(object):
+    def __init__(self, label=""):
         self.lines = []
         self.rect = None
+        self.label = label
 
     def fit_spline(self,sfactor=200):
         n = len(self.lines)
@@ -49,7 +51,7 @@ def main():
         plt.plot(x,-y)
     plt.show()
 
-def main():
+def main2():
     tabletop = pickle.load(open(sys.argv[1]))
     for i in range(len(tabletop)):
         xi,yi = np.array(tabletop[i].lines,dtype=np.float).T
