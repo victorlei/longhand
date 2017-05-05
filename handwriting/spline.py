@@ -6,11 +6,11 @@ from collections import deque
 from scipy.interpolate import UnivariateSpline
 #from scipy.interpolate import InterpolatedUnivariateSpline
 #import matplotlib.pyplot as plt
-#import numpy as np
+import numpy as np
 #import threading
 import sys
 #import math
-#import pygame
+import pygame
 
 class spline(object):
     def __init__(self, label=""):
@@ -38,10 +38,9 @@ class spline(object):
         y = fy(t)+y0
         self.lines = zip(x,y)
 
-def get_rect(lines):
-    x,y = np.array(lines, dtype=np.float).T 
-    x0,x1,y0,y1 = x.min(),x.max(),y.min(),y.max()
-    return pygame.Rect(x0,y0,x1-x0,y1-y0)
+        x,y = np.array(self.lines, dtype=np.float).T 
+        x0,x1,y0,y1 = x.min(),x.max(),y.min(),y.max()
+        self.rect = pygame.Rect(x0,y0,x1-x0,y1-y0)
 
 
 def main():
