@@ -1,16 +1,19 @@
 import pickle
 import time
 #from multiprocessing import Process
-#from scipy.stats import pearsonr,linregress
+from scipy.stats import pearsonr,linregress
 from collections import deque
 from scipy.interpolate import UnivariateSpline
 #from scipy.interpolate import InterpolatedUnivariateSpline
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import numpy as np
 #import threading
 import sys
 #import math
+from itertools import count
 import pygame
+
+c = count()
 
 class spline(object):
     def __init__(self, label=""):
@@ -44,18 +47,21 @@ class spline(object):
 
 
 def main():
-    tabletop = pickle.load(open(sys.argv[1]))
-    for i in range(len(tabletop)):
-        x,y = np.array(tabletop[i].lines,dtype=np.float).T
+    everything = pickle.load(open(sys.argv[1]))
+    print len(everything)
+    for i in range(len(everything)):
+        x,y = np.array(everything[i].lines,dtype=np.float).T
+        plt.plot(x)
+        plt.plot(y)
         plt.plot(x,-y)
     plt.show()
 
-def main2():
-    tabletop = pickle.load(open(sys.argv[1]))
-    for i in range(len(tabletop)):
-        xi,yi = np.array(tabletop[i].lines,dtype=np.float).T
-        for j in range(i+1,len(tabletop)):
-            xj,yj = np.array(tabletop[j].lines,dtype=np.float).T
+def main():
+    everything = pickle.load(open(sys.argv[1]))
+    for i in range(len(everything)):
+        xi,yi = np.array(everything[i].lines,dtype=np.float).T
+        for j in range(i+1,len(everything)):
+            xj,yj = np.array(everything[j].lines,dtype=np.float).T
 
             zi = np.hypot(xi,yi)
             zj = np.hypot(xj,yj)
