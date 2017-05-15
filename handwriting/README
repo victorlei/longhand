@@ -1,0 +1,31 @@
+1. Every connected curve is a potential glyph.
+
+Over time, some of them will be split and some
+joined (hebrew aleph,hei, latin K,A, numeric 4
+and 5).  A bounding box is computed for each
+potential glyph.
+
+Each potential glyph is fitted a spline.
+
+The splines are resampled, and their first
+derivativd computed.
+
+Using the derivatives we compute the distance
+between each pair of potential glyphs. Spearmans r
+is used as the distance measure.  Glyphs that
+are found to represent the same leter are 
+replaced with their averages.  Bounding boxes
+are used to align and rescale the text.
+
+2. Further analysis requires a vocabulary.
+
+A predefined vocabulary is used to map the glyphs to
+characters, and to join simple cases.
+
+2. Word analysis
+
+Using a sample text, we collect word prefixes, then
+we match the first letter against the long glyphs.
+
+
+
