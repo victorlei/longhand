@@ -1,6 +1,6 @@
 import sys,pickle,math,time,os
-from multiprocessing import Process
-import Queue
+from Queue import Empty,Full,PriorityQueue
+from multiprocessing import Process,Queue
 from scipy.interpolate import UnivariateSpline
 from itertools import count
 from collections import deque
@@ -9,6 +9,7 @@ import cv2
 import pygame
 from math import pi
 from spline import *
+import readline
 
 BLACK = (  0,   0,   0)
 WHITE = (255, 255, 255)
@@ -28,7 +29,6 @@ def loop(q):
     x = y = 0 
     try:
         everything = pickle.load(open("everything.pickle","r"))
-        #pygame.display.set_caption("Ok everything.pickle")
     except:
         everything = deque()
     verbosity = False
@@ -36,23 +36,27 @@ def loop(q):
     background_image = pygame.image.load("everything.png").convert()
     jpeg = 0
     done = False
-    textbuffer = deque()
     strbuffer = ""
     while not done:
         clock.tick(10)
         try:
             strbuffer = q.get_nowait()
-        except Queue.Empty:
+            pygame.display.set_caption(strbuffer)
+        except Empty:
             pass
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                done = True 
+                done = True
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_BACKSPACE:
                     try:
                         everything.pop()
                     except IndexError:
                         pass
+                elif event.key == pygame.K_b: # bootstrap
+                    everything[-1].boot()
+                elif event.key == pygame.K_d: # distance
+                    everything[-1].distance()
                 elif event.key == pygame.K_LEFT:
                     everything.rotate(-1)
                 elif event.key == pygame.K_RIGHT:
@@ -65,7 +69,7 @@ def loop(q):
             elif event.type == pygame.MOUSEBUTTONUP:
                 everything[-1].fit_spline()
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                everything.append(spline(strbuffer))
+                everything.append(spline("%s.deriv" % int(time.time())))
             else:
                 pass
         # End of "for event in pygame.event.get()" loop,
@@ -101,16 +105,13 @@ def loop(q):
     pickle.dump(everything,open("everything.pickle","w"))
 
 def main():
-    q = Queue.Queue()
+    q = Queue()
     pid = Process(target=loop,args=(q,))
     pid.start()
     while 1:
-        try:
-            buf = raw_input("=")
-            q.put(buf)
-        except EOFError:
-            break
+        buf = raw_input("=")
+        q.put(buf)
         
-if __name__ == "__main__":
+if __name__  == "__main__":
     main()
     

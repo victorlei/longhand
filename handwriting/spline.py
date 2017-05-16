@@ -8,18 +8,54 @@ from scipy.interpolate import UnivariateSpline
 import matplotlib.pyplot as plt
 import numpy as np
 #import threading
-import sys
+import sys,os
 #import math
 from itertools import count
 import pygame
+
+vocab = {}
+for f in [os.path.join("graffiti",s) for s in "ABC"]:
+    #"DEFGHIJKLMNOPQRSTUVWXYZ"]:
+    x,y = np.loadtxt(f).T
+    vocab[f] = x,y
 
 c = count()
 
 class spline(object):
     def __init__(self, label=""):
         self.lines = []
+        self.deriv = []
         self.rect = None
         self.label = label
+
+    def distance(self):
+        """Measure distance from this spline to everybody
+        else.  Return K Nearest Neighbours  """
+        try:
+            s = []
+            x1,y1 = np.array(self.deriv, dtype=np.float).T
+            for k,(x0,y0) in vocab.iteritems():
+                r,p = pearsonr(y0,y1)
+                s.append(( p,k ))
+            s.sort()
+            #print s[-5:]
+            print s
+        except:
+            return np.inf
+
+    def dist_old(self,other):
+        if self is other:
+            return 0
+        try:
+            x0,y0 = np.array(other.deriv, dtype=np.float).T
+            x1,y1 = np.array(self.deriv, dtype=np.float).T
+#            plt.plot(y0)
+#            plt.plot(y1)
+#            plt.show()
+            r,p = pearsonr(y0,y1)
+            return p
+        except:
+            return np.inf
 
     def fit_spline(self,sfactor=200):
         n = len(self.lines)
@@ -40,6 +76,7 @@ class spline(object):
         x = fx(t)+x0
         y = fy(t)+y0
         self.lines = zip(x,y)
+        self.deriv = zip(fx(t,1),fy(t,1))
 
         x,y = np.array(self.lines, dtype=np.float).T 
         x0,x1,y0,y1 = x.min(),x.max(),y.min(),y.max()
