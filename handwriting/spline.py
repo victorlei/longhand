@@ -1,5 +1,5 @@
 import pickle
-import time
+import time,traceback
 #from multiprocessing import Process
 from scipy.stats import pearsonr,linregress
 from collections import deque
@@ -13,14 +13,6 @@ import sys,os
 from itertools import count
 import pygame
 
-vocab = {}
-for f in [os.path.join("graffiti",s) for s in "ABC"]:
-    #"DEFGHIJKLMNOPQRSTUVWXYZ"]:
-    x,y = np.loadtxt(f).T
-    vocab[f] = x,y
-
-c = count()
-
 class spline(object):
     def __init__(self, label=""):
         self.lines = []
@@ -28,6 +20,24 @@ class spline(object):
         self.rect = None
         self.label = label
 
+    def load(self,filename):
+        try:
+            x0,y0,x1,y1 = np.loadtxt("graffiti/"+filename).T
+            self.lines = np.array([x0,y0]).T
+            self.deriv = np.array([x1,y1]).T
+            print "Ok",filename
+        except:
+            traceback.print_exc()
+
+    def save(self,filename):
+        try:
+            x0,y0 = np.array(self.lines).T
+            x1,y1 = np.array(self.deriv).T
+            np.savetxt("graffiti/"+filename,np.array([x0,y0,x1,y1]).T)
+            print "Ok",filename
+        except:
+            traceback.print_exc()
+        
     def distance(self):
         """Measure distance from this spline to everybody
         else.  Return K Nearest Neighbours  """
@@ -58,11 +68,12 @@ class spline(object):
             return np.inf
 
     def fit_spline(self,sfactor=200):
-        n = len(self.lines)
+        self.lines = np.array(self.lines)
+        n = self.lines.shape[0]
         if n < 4:
             return
 
-        x,y = np.array(self.lines, dtype=np.float).T
+        x,y = self.lines.T
         x0,x1,y0,y1 = x.min(),x.max(),y.min(),y.max()
         if x0 == x1 or y0==y1:
             return
@@ -75,10 +86,10 @@ class spline(object):
         t = np.linspace(0,n,100)
         x = fx(t)+x0
         y = fy(t)+y0
-        self.lines = zip(x,y)
-        self.deriv = zip(fx(t,1),fy(t,1))
+        self.lines = np.array([x,y]).T
+        self.deriv = np.array([fx(t,1),fy(t,1)]).T
 
-        x,y = np.array(self.lines, dtype=np.float).T 
+        x,y = self.lines.T 
         x0,x1,y0,y1 = x.min(),x.max(),y.min(),y.max()
         self.rect = pygame.Rect(x0,y0,x1-x0,y1-y0)
 

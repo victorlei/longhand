@@ -17,7 +17,7 @@ BLUE =  (  0,   0, 255)
 GREEN = (  0, 255,   0)
 RED =   (255,   0,   0)
 
-def loop(q):
+def loop():
     pygame.init()
     size = [1024,512]
     screen = pygame.display.set_mode(size)#,pygame.RESIZABLE)
@@ -27,10 +27,7 @@ def loop(q):
     clock = pygame.time.Clock()
     ignore_mouse = True
     x = y = 0 
-    try:
-        everything = pickle.load(open("everything.pickle","r"))
-    except:
-        everything = deque()
+    everything = deque()
     verbosity = False
     pygame.key.set_repeat(500,50)
     background_image = pygame.image.load("everything.png").convert()
@@ -40,7 +37,6 @@ def loop(q):
     while not done:
         clock.tick(10)
         try:
-            strbuffer = q.get_nowait()
             pygame.display.set_caption(strbuffer)
         except Empty:
             pass
@@ -53,9 +49,17 @@ def loop(q):
                         everything.pop()
                     except IndexError:
                         pass
-                elif event.key == pygame.K_b: # bootstrap
-                    everything[-1].boot()
-                elif event.key == pygame.K_d: # distance
+                elif event.key == pygame.K_r:
+                    for filename in os.listdir("graffiti"):
+                        thing = spline(filename)
+                        thing.load(filename)
+                        everything.append(thing)
+                elif event.key == pygame.K_w:
+                    #import pdb
+                    #pdb.set_trace()
+                    for thing in everything:
+                        thing.save(thing.label)
+                elif event.key == pygame.K_d:
                     everything[-1].distance()
                 elif event.key == pygame.K_LEFT:
                     everything.rotate(-1)
@@ -69,7 +73,7 @@ def loop(q):
             elif event.type == pygame.MOUSEBUTTONUP:
                 everything[-1].fit_spline()
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                everything.append(spline("%s.deriv" % int(time.time())))
+                everything.append(spline("%s" % time.time( )))
             else:
                 pass
         # End of "for event in pygame.event.get()" loop,
@@ -83,7 +87,7 @@ def loop(q):
                     continue
                 color = RED if thing is everything[-1] else BLACK
                 pygame.draw.lines(screen, color, False, thing.lines, 2)
-                if (thing.rect and
+                if (0 and thing.rect and
                     thing.rect.collidepoint(x,y)):
                     pygame.draw.rect(screen,BLUE,thing.rect,1)
                     text = font.render(thing.label, True, (0, 128, 0))
@@ -102,16 +106,11 @@ def loop(q):
         pygame.display.flip()
      
     pygame.quit()
-    pickle.dump(everything,open("everything.pickle","w"))
+    #pickle.dump(everything,open("everything.pickle","w"))
 
 def main():
-    q = Queue()
-    pid = Process(target=loop,args=(q,))
-    pid.start()
-    while 1:
-        buf = raw_input("=")
-        q.put(buf)
-        
+    loop()
+
 if __name__  == "__main__":
     main()
     
