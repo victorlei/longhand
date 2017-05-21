@@ -15,26 +15,28 @@ import pygame
 
 class spline(object):
     def __init__(self, label=""):
+        self.points = [] # list of pairs
         self.lines = []
         self.deriv = []
-        self.rect = None
+        self.rect  = None
         self.label = label
 
-    def load(self,filename):
+    def load(self,dirname,filename):
         try:
-            x0,y0,x1,y1 = np.loadtxt("graffiti/"+filename).T
+            path ="%s/%s" % (dirname,filename)
+            x0,y0,x1,y1 = np.loadtxt(path).T
             self.lines = np.array([x0,y0]).T
             self.deriv = np.array([x1,y1]).T
-            print "Ok",filename
         except:
             traceback.print_exc()
 
-    def save(self,filename):
+    def save(self,dirname,filename):
         try:
             x0,y0 = np.array(self.lines).T
             x1,y1 = np.array(self.deriv).T
-            np.savetxt("graffiti/"+filename,np.array([x0,y0,x1,y1]).T)
-            print "Ok",filename
+            path = "%s/%s" % (dirname,filename)
+            np.savetxt(np.array([x0,y0,x1,y1]).T,
+                      filename)
         except:
             traceback.print_exc()
         
@@ -42,11 +44,14 @@ class spline(object):
         """Measure distance from this spline to everybody
         else.  Return K Nearest Neighbours  """
         try:
+            import pdb
+            pdb.set_trace()
             s = []
-            x1,y1 = np.array(self.deriv, dtype=np.float).T
-            for k,(x0,y0) in vocab.iteritems():
+            x0,y0 = self.deriv.T
+            for thing in everything:
+                x1,y1 = thing.deriv.T
                 r,p = pearsonr(y0,y1)
-                s.append(( p,k ))
+                s.append(( p,thing.label ))
             s.sort()
             #print s[-5:]
             print s
@@ -68,30 +73,35 @@ class spline(object):
             return np.inf
 
     def fit_spline(self,sfactor=200):
-        self.lines = np.array(self.lines)
-        n = self.lines.shape[0]
+        n = len(self.points)
         if n < 4:
             return
 
-        x,y = self.lines.T
-        x0,x1,y0,y1 = x.min(),x.max(),y.min(),y.max()
-        if x0 == x1 or y0==y1:
+        x,y = np.array(self.points).T
+        x_min,x_max,y_min,y_max = (x.min(),x.max(),
+                                   y.min(),y.max())
+        if x_min == x_max or y_min == y_max:
             return
-        x -= x0
-        y -= y0
+
+        x -= x_min
+        y -= y_min
         i = np.arange(n)
         fx = UnivariateSpline(i,x[i],s=sfactor)
         fy = UnivariateSpline(i,y[i],s=sfactor)
-        
+       
         t = np.linspace(0,n,100)
-        x = fx(t)+x0
-        y = fy(t)+y0
+        x = fx(t)+x_min
+        y = fy(t)+y_min
         self.lines = np.array([x,y]).T
         self.deriv = np.array([fx(t,1),fy(t,1)]).T
 
         x,y = self.lines.T 
-        x0,x1,y0,y1 = x.min(),x.max(),y.min(),y.max()
-        self.rect = pygame.Rect(x0,y0,x1-x0,y1-y0)
+        x_min,x_max,y_min,y_max = (x.min(),x.max(),
+                                   y.min(),y.max())
+        self.rect = pygame.Rect(x_min,
+                                y_min,
+                                x_max-x_min,
+                                y_max-y_min)
 
 
 def main():

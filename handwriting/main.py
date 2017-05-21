@@ -1,4 +1,4 @@
-import sys,pickle,math,time,os
+import sys,pickle,math,time,os,re,traceback
 from Queue import Empty,Full,PriorityQueue
 from multiprocessing import Process,Queue
 from scipy.interpolate import UnivariateSpline
@@ -20,26 +20,26 @@ RED =   (255,   0,   0)
 def loop():
     pygame.init()
     size = [1024,512]
-    screen = pygame.display.set_mode(size)#,pygame.RESIZABLE)
+    screen = pygame.display.set_mode(size)
     font = pygame.font.SysFont("comicsansms", 72)
 
      
     clock = pygame.time.Clock()
-    ignore_mouse = True
     x = y = 0 
-    everything = deque()
     verbosity = False
     pygame.key.set_repeat(500,50)
     background_image = pygame.image.load("everything.png").convert()
     jpeg = 0
     done = False
     strbuffer = ""
+    points =[]
     while not done:
         clock.tick(10)
         try:
             pygame.display.set_caption(strbuffer)
         except Empty:
             pass
+        disp = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 done = True
@@ -50,15 +50,10 @@ def loop():
                     except IndexError:
                         pass
                 elif event.key == pygame.K_r:
-                    for filename in os.listdir("graffiti"):
-                        thing = spline(filename)
-                        thing.load(filename)
-                        everything.append(thing)
-                elif event.key == pygame.K_w:
-                    #import pdb
-                    #pdb.set_trace()
+                    disp = not disp 
+                elif event.key == pygame.K_l:
                     for thing in everything:
-                        thing.save(thing.label)
+                        print "L",thing.label
                 elif event.key == pygame.K_d:
                     everything[-1].distance()
                 elif event.key == pygame.K_LEFT:
@@ -67,7 +62,7 @@ def loop():
                     everything.rotate(+1)
             elif event.type == pygame.MOUSEMOTION:
                 if event.buttons == (1,0,0):
-                    everything[-1].lines.append(event.pos)
+                    everything[-1].points.append(event.pos)
                 elif event.buttons == (0,0,0):
                     x,y = event.pos
             elif event.type == pygame.MOUSEBUTTONUP:
@@ -83,10 +78,18 @@ def loop():
             screen.blit(background_image, [0, 0])
 
             for thing in everything:
-                if len(thing.lines) < 4:
+                if len(thing.points) < 4:
                     continue
                 color = RED if thing is everything[-1] else BLACK
-                pygame.draw.lines(screen, color, False, thing.lines, 2)
+                try:
+                    if disp:
+                        points = thing.points
+                    else:
+                        points = list(thing.lines)
+                    if len(points) > 0:
+                        pygame.draw.lines(screen, color, False, points, 2)
+                except:
+                    traceback.print_exc()
                 if (0 and thing.rect and
                     thing.rect.collidepoint(x,y)):
                     pygame.draw.rect(screen,BLUE,thing.rect,1)
@@ -109,7 +112,27 @@ def loop():
     #pickle.dump(everything,open("everything.pickle","w"))
 
 def main():
-    loop()
+    global everything
+    everything = deque()
+    try:
+        dirname = sys.argv[2]
+    except:
+        dirname = "/tmp/longhand"
+    try:
+        os.mkdir(dirname)
+    except:
+        pass
+    try:
+        for filename in os.listdir(dirname):
+            thing = spline(filename)
+            thing.load(dirname,filename)
+            everything.append(thing)
+        loop()
+    except:
+        traceback.print_exc()
+    finally:
+        for thing in everything:
+            thing.save(dirname,thing.label)
 
 if __name__  == "__main__":
     main()
